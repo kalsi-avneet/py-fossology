@@ -6,7 +6,19 @@ from fossology.common import _util
 from fossology.exceptions import FossologyError,\
         FossologyInvalidCredentialsError
 
+class Connection():
+    def __init__(self):
+        self.session = Session()
+        self.headers = self.session.headers
 
+    def post(self, args, **kwargs):
+        return self.session.post(args, **kwargs)
+
+    def get(self, args, **kwargs):
+        return self.session.get(args, **kwargs)
+
+    def close_connection(self):
+        self.session.close()
 
 class Fossology():
     def __init__(self, server):
@@ -20,23 +32,20 @@ class Fossology():
         self.server = server
         self.api_server = self.util._join_url(self.server, 'api/v1')
 
-        # setup session to be used across subsequent communications
-        self.session = Session()
-        self.get = self.session.get
-        self.post = self.session.post
+        # setup connection
+        self.connection = Connection()
 
-        # Add common headers to the session
-        self.session.headers.update({
+        # Add common headers to the connection
+        self.connection.headers.update({
             'accept': 'application/json'
             })
-
 
         # (TODO): Setup logger if requested
 
     def __del__(self):
 
-        # close the session
-        self.session.close()
+        # close the connection
+        self.connection.close_connection()
 
 
     def generate_auth_token(self, username, password, expire, scope='read'):
@@ -56,8 +65,7 @@ class Fossology():
 
 
         # request a token from the server
-        server_response = self.post(endpoint, headers=headers, data=payload)
-        server_response.raise_for_status()
+        server_response = self.connection.post(endpoint, headers=headers, data=payload)
 
         response_data = server_response.json()
 
@@ -68,7 +76,7 @@ class Fossology():
         if response_code == 201:        # Token generated
             # Extract token and update headers
             token = response_data['Authorization']
-            self.session.headers.update({'Authorization':token})
+            self.connection.headers.update({'Authorization':token})
             return True
         elif response_code == 404:
             raise FossologyInvalidCredentialsError()
