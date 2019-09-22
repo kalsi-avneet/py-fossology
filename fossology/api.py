@@ -11,11 +11,21 @@ class Connection():
         self.session = Session()
         self.headers = self.session.headers
 
-    def post(self, args, **kwargs):
-        return self.session.post(args, **kwargs)
+    def delete(self, args, **kwargs):
+        return self.session.delete(args, **kwargs)
 
     def get(self, args, **kwargs):
         return self.session.get(args, **kwargs)
+
+    def patch(self, args, **kwargs):
+        return self.session.patch(args, **kwargs)
+
+    def post(self, args, **kwargs):
+        return self.session.post(args, **kwargs)
+
+    def put(self, args, **kwargs):
+        return self.session.put(args, **kwargs)
+
 
     def close_connection(self):
         self.session.close()
