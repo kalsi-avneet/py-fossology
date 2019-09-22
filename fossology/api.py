@@ -138,7 +138,6 @@ class Fossology():
         '''Returns a list of all uploads on the server'''
         uploads = []
         endpoint_fragment = 'uploads'
-
         headers = {'Content-Type': 'application/json'}
 
         # request a list of all uploads from the server
@@ -159,7 +158,8 @@ class Fossology():
                     description = upload['description'],
                     upload_name = upload['uploadname'],
                     upload_date = upload['uploaddate'],
-                    filesize = upload['filesize']))
+                    filesize = upload['filesize'],
+                    connection = self.connection))
 
 
         return uploads
@@ -171,14 +171,36 @@ class Fossology():
 
     def upload(self, upload_id):
         '''Gets a single upload from the server'''
-        pass
+        endpoint_fragments = ['uploads', upload_id]
+
+        headers = {'Content-Type': 'application/json'}
+
+        # request upload data from server
+        server_response = self.connection.get(
+                url_fragments=endpoint_fragments, headers=headers)
+        response_code = server_response.status_code
+
+        if response_code == 200:
+            response_data = server_response.json()
+
+            # Return a new Upload object from the data received
+            return Upload(
+                upload_id = response_data['id'],
+                folder_id = response_data['folderid'],
+                folder_name = response_data['foldername'],
+                description = response_data['description'],
+                upload_name = response_data['uploadname'],
+                upload_date = response_data['uploaddate'],
+                filesize = response_data['filesize'],
+                connection=self.connection)
+
 
 
 
 class Upload():
     '''Denotes a single upload'''
 
-    def __init__(self, upload_id,
+    def __init__(self, upload_id, connection,
             folder_id=None,
             folder_name=None,
             description=None,
@@ -186,20 +208,53 @@ class Upload():
             upload_date=None,
             filesize=None):
 
-        self.upload_id = upload_id,
-        self.folder_id = folder_id,
-        self.folder_name = folder_name,
-        self.description = description,
-        self.upload_name = upload_name,
-        self.upload_date = upload_date,
+        self.upload_id = upload_id
+        self.folder_id = folder_id
+        self.folder_name = folder_name
+        self.description = description
+        self.upload_name = upload_name
+        self.upload_date = upload_date
         self.filesize = filesize
+        self.connection = connection
+
+        self._endpoint_fragment = 'uploads'
 
 
-    def delete(self, upload_id) -> bool:
-        pass
+    def delete(self):
+        '''Delete an upload'''
+        url_fragments = [self._endpoint_fragment, self.upload_id]
 
-    def move(self, upload_id, destination_folder_id) -> bool:
-        pass
+        # request upload deletion
+        server_response = self.connection.delete(
+                url_fragments=url_fragments)
 
-    def copy(self, upload_id, destination_folder_id) -> bool:
-        pass
+        response_code = server_response.status_code
+        return response_code == 202     # Accepted
+
+
+
+    def move(self, destination_folder_id):
+        '''Move an upload to another folder'''
+        url_fragments = [self._endpoint_fragment, self.upload_id]
+
+        headers = {'folderId': str(destination_folder_id)}
+
+        # request to move current upload
+        server_response = self.connection.patch(
+                url_fragments=url_fragments, headers=headers)
+
+        response_code = server_response.status_code
+        return response_code == 202     # Accepted
+
+    def copy(self, destination_folder_id) -> bool:
+        '''Move an upload to another folder'''
+        url_fragments = [self._endpoint_fragment, self.upload_id]
+
+        headers = {'folderId': str(destination_folder_id)}
+
+        # request to move current upload
+        server_response = self.connection.put(
+                url_fragments=url_fragments, headers=headers)
+
+        response_code = server_response.status_code
+        return response_code == 202     # Accepted
