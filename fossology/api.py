@@ -7,7 +7,9 @@ from fossology.exceptions import FossologyError,\
         FossologyInvalidCredentialsError
 
 class Connection():
-    def __init__(self):
+    def __init__(self, server):
+        self.server = server
+
         self.session = Session()
         self.headers = self.session.headers
 
@@ -29,29 +31,45 @@ class Connection():
 
         return response
 
-    def delete(self, *args, **kwargs):
-        return self.session.delete(*args, **kwargs)
 
-    def get(self, *args, **kwargs):
+    def delete(self, url_fragments, *args, **kwargs):
+        url = utils._join_url(self.server, *url_fragments)
+        prepared_request = self.session.prepare_request(
+                Request(method='DELETE', url=url, *args, **kwargs))
+        return(self._send_request(prepared_request))
+
+
+    def get(self, url_fragments, *args, **kwargs):
         '''Wrapper around a sessions GET request
         '''
+        url = utils._join_url(self.server, *url_fragments)
+
         prepared_request = self.session.prepare_request(
-                Request(method='GET', *args, **kwargs))
+                Request(method='GET', url=url, *args, **kwargs))
         return(self._send_request(prepared_request))
 
-    def patch(self, *args, **kwargs):
-        return self.session.patch(*args, **kwargs)
 
-    def post(self, *args, **kwargs):
+    def patch(self, url_fragments, *args, **kwargs):
+        url = utils._join_url(self.server, *url_fragments)
+        prepared_request = self.session.prepare_request(
+                Request(method='PATCH', url=url, *args, **kwargs))
+        return(self._send_request(prepared_request))
+
+
+    def post(self, url_fragments, *args, **kwargs):
         '''Wrapper around a sessions POST request
         '''
+        url = utils._join_url(self.server, *url_fragments)
         prepared_request = self.session.prepare_request(
-                Request(method='POST', *args, **kwargs))
+                Request(method='POST', url=url, *args, **kwargs))
         return(self._send_request(prepared_request))
 
 
-    def put(self, *args, **kwargs):
-        return self.session.put(*args, **kwargs)
+    def put(self, url_fragments, *args, **kwargs):
+        url = utils._join_url(self.server, *url_fragments)
+        prepared_request = self.session.prepare_request(
+                Request(method='PUT', url=url, *args, **kwargs))
+        return(self._send_request(prepared_request))
 
 
     def close_connection(self):
@@ -60,11 +78,10 @@ class Connection():
 class Fossology():
     def __init__(self, server):
 
-        self.server = server
-        self.api_server = utils._join_url(self.server, 'api/v1')
+        api_server = utils._join_url(server, 'api/v1')
 
         # setup connection
-        self.connection = Connection()
+        self.connection = Connection(server=api_server)
 
         # Add common headers to the connection
         self.connection.headers.update({
@@ -87,8 +104,7 @@ class Fossology():
         '''
 
         # Create the URL for this endpoint
-        auth_endpoint = 'tokens'
-        endpoint = utils._join_url(self.api_server, auth_endpoint)
+        endpoint_fragment = 'tokens'
 
         headers = {'Content-Type': 'application/json'}
 
@@ -101,7 +117,8 @@ class Fossology():
              })
 
         # request a token from the server
-        server_response = self.connection.post(url=endpoint,
+        server_response = self.connection.post(
+                url_fragments=[endpoint_fragment],
                 headers=headers, data=payload)
         response_code = server_response.status_code
 
@@ -120,15 +137,13 @@ class Fossology():
     def get_all_uploads(self):
         '''Returns a list of all uploads on the server'''
         uploads = []
-
-        uploads_endpoint = 'uploads'
-        endpoint = utils._join_url(self.api_server, uploads_endpoint)
+        endpoint_fragment = 'uploads'
 
         headers = {'Content-Type': 'application/json'}
 
         # request a list of all uploads from the server
-        server_response = self.connection.get(url=endpoint,
-                headers=headers)
+        server_response = self.connection.get(
+                url_fragments=[endpoint_fragment], headers=headers)
         response_code = server_response.status_code
 
 
