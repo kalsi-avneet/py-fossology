@@ -2,7 +2,7 @@ import json
 from requests import Session
 
 
-from fossology.common import _util
+from fossology import utils
 from fossology.exceptions import FossologyError,\
         FossologyInvalidCredentialsError
 
@@ -33,14 +33,8 @@ class Connection():
 class Fossology():
     def __init__(self, server):
 
-        self.util = _util()
-
-        # Remove trailing slashes from servername
-        if server.endswith('/'):
-            server = server[:-1]
-
         self.server = server
-        self.api_server = self.util._join_url(self.server, 'api/v1')
+        self.api_server = utils._join_url(self.server, 'api/v1')
 
         # setup connection
         self.connection = Connection()
@@ -62,13 +56,13 @@ class Fossology():
         '''Requests a new token from the fossology server'''
 
         auth_endpoint = 'tokens'
-        endpoint = self.util._join_url(self.api_server, auth_endpoint)
+        endpoint = utils._join_url(self.api_server, auth_endpoint)
 
         headers = {'Content-Type': 'application/json'}
 
         payload = json.dumps({"username": username,
              'password': password,
-             'token_name': self.util._generate_unique_name(),
+             'token_name': utils._generate_unique_name(),
              'token_scope': scope,
              'token_expire': expire
              })
@@ -100,7 +94,7 @@ class Fossology():
         '''Returns a list of all uploads on the server'''
         uploads = []
         uploads_endpoint = 'uploads'
-        endpoint = self.util._join_url(self.api_server, uploads_endpoint)
+        endpoint = utils._join_url(self.api_server, uploads_endpoint)
 
         headers = {'Content-Type': 'application/json'}
 
