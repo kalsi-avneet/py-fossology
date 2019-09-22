@@ -1,5 +1,5 @@
 import json
-from requests import Session
+from requests import Request, Session
 
 
 from fossology import utils
@@ -11,20 +11,47 @@ class Connection():
         self.session = Session()
         self.headers = self.session.headers
 
-    def delete(self, args, **kwargs):
-        return self.session.delete(args, **kwargs)
+    def _send_request(self, prepped_request):
+        '''Sends a received prepared request
 
-    def get(self, args, **kwargs):
-        return self.session.get(args, **kwargs)
+        Returns a response object if successful, or
+            throws a FossologyError
+        '''
+        response = self.session.send(prepped_request)
+        response_code = response.status_code
 
-    def patch(self, args, **kwargs):
-        return self.session.patch(args, **kwargs)
+        # Raise an error if the request was not successful
+        if 400 <= response_code <=599 :
+            response_data = response.json()
+            raise FossologyError(response_code,
+                    response_data.get('message'),
+                    response_data.get('type'))
 
-    def post(self, args, **kwargs):
-        return self.session.post(args, **kwargs)
+        return response
 
-    def put(self, args, **kwargs):
-        return self.session.put(args, **kwargs)
+    def delete(self, *args, **kwargs):
+        return self.session.delete(*args, **kwargs)
+
+    def get(self, *args, **kwargs):
+        '''Wrapper around a sessions GET request
+        '''
+        prepared_request = self.session.prepare_request(
+                Request(method='GET', *args, **kwargs))
+        return(self._send_request(prepared_request))
+
+    def patch(self, *args, **kwargs):
+        return self.session.patch(*args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        '''Wrapper around a sessions POST request
+        '''
+        prepared_request = self.session.prepare_request(
+                Request(method='POST', *args, **kwargs))
+        return(self._send_request(prepared_request))
+
+
+    def put(self, *args, **kwargs):
+        return self.session.put(*args, **kwargs)
 
 
     def close_connection(self):
@@ -53,13 +80,19 @@ class Fossology():
 
 
     def generate_auth_token(self, username, password, expire, scope='read'):
-        '''Requests a new token from the fossology server'''
+        '''Requests a new token from the fossology server
 
+        Adds the token to the session if successful, else
+            raises a FossologyError
+        '''
+
+        # Create the URL for this endpoint
         auth_endpoint = 'tokens'
         endpoint = utils._join_url(self.api_server, auth_endpoint)
 
         headers = {'Content-Type': 'application/json'}
 
+        # Prepare data to send with the request
         payload = json.dumps({"username": username,
              'password': password,
              'token_name': utils._generate_unique_name(),
@@ -67,23 +100,17 @@ class Fossology():
              'token_expire': expire
              })
 
-
         # request a token from the server
-        server_response = self.connection.post(endpoint, headers=headers, data=payload)
-
-        response_data = server_response.json()
-
-
-        # Raise error or return success based on the response code
+        server_response = self.connection.post(url=endpoint,
+                headers=headers, data=payload)
         response_code = server_response.status_code
 
         if response_code == 201:        # Token generated
+            response_data = server_response.json()
             # Extract token and update headers
             token = response_data['Authorization']
             self.connection.headers.update({'Authorization':token})
             return True
-        elif response_code == 404:
-            raise FossologyInvalidCredentialsError()
         else:
             raise FossologyError(response_code,
                     response_data['message'],
@@ -93,35 +120,31 @@ class Fossology():
     def get_all_uploads(self):
         '''Returns a list of all uploads on the server'''
         uploads = []
+
         uploads_endpoint = 'uploads'
         endpoint = utils._join_url(self.api_server, uploads_endpoint)
 
         headers = {'Content-Type': 'application/json'}
 
         # request a list of all uploads from the server
-        server_response = self.connection.get(endpoint, headers=headers)
-
-        response_data = server_response.json()
-
-
-        # Raise error or return success based on the response code
+        server_response = self.connection.get(url=endpoint,
+                headers=headers)
         response_code = server_response.status_code
 
-        if response_code != 200:
-            raise FossologyError(response_code,
-                    response_data['message'],
-                    response_data['type'])
 
-        # Create new Upload objects from the data received
-        for upload in response_data:
-            uploads.append(Upload(
-                upload_id = upload['id'],
-                folder_id = upload['folderid'],
-                folder_name = upload['foldername'],
-                description = upload['description'],
-                upload_name = upload['uploadname'],
-                upload_date = upload['uploaddate'],
-                filesize = upload['filesize']))
+        if response_code == 200:
+            response_data = server_response.json()
+
+            # Create new Upload objects from the data received
+            for upload in response_data:
+                uploads.append(Upload(
+                    upload_id = upload['id'],
+                    folder_id = upload['folderid'],
+                    folder_name = upload['foldername'],
+                    description = upload['description'],
+                    upload_name = upload['uploadname'],
+                    upload_date = upload['uploaddate'],
+                    filesize = upload['filesize']))
 
 
         return uploads
