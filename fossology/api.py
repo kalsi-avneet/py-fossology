@@ -236,15 +236,79 @@ class Fossology():
                 connection=self.connection)
 
 
+    def folder(self, folder_id):
+        '''Gets a single folder from the server'''
+        endpoint_fragments = ['folders', folder_id]
+
+        headers = {'Content-Type': 'application/json'}
+
+        # request folder data
+        server_response = self.connection.get(
+                url_fragments=endpoint_fragments, headers=headers)
+        response_code = server_response.status_code
+
+        if response_code == 200:
+            response_data = server_response.json()
+
+            # Return a new 'Folder' object
+            return Folder(
+                    folder_id = response_data['id'],
+                    folder_name = response_data['name'],
+                    description = response_data['description'],
+                    connection = self.connection)
+
+
     def get_all_folders(self):
         '''Returns a list of all folders on the server'''
-        pass
+        folders = []
+        endpoint_fragment = 'folders'
+        headers = {'Content-Type': 'application/json'}
+
+        # Request a list of all accessible folders
+        server_response = self.connection.get(
+                url_fragments=[endpoint_fragment], headers=headers)
+        response_code = server_response.status_code
+
+
+        if response_code == 200:
+            response_data = server_response.json()
+
+            # Create new Folder objects from the data received
+            for folder in response_data:
+                folders.append(Folder(
+                    folder_id = folder['id'],
+                    folder_name = folder['name'],
+                    description = folder['description'],
+                    connection = self.connection))
+
+        return folders
+
 
     def new_folder(self, parent_folder_id, folder_name,
                     folder_description=None):
         '''Create a new folder on the server'''
-        pass
+        endpoint_fragments = ['folders']
 
+        headers = {
+                'parentFolder': str(parent_folder_id),
+                'folderName':folder_name,
+                'folderDescription':folder_description}
+
+        server_response = self.connection.post(
+                url_fragments=endpoint_fragments,
+                headers=headers)
+
+        response_code = server_response.status_code
+        response_data = server_response.json()
+
+        if response_code == 201:        # Folder created
+            # Create a folder object with received folder id
+            return Folder(folder_id=response_data.get('message'),
+                            connection=self.connection)
+        else:    # includes 200: (Folder with the same name already exists under the same parent)
+            raise FossologyError(response_code,
+                    response_data['message'],
+                    response_data['type'])
 
 
 
@@ -319,30 +383,76 @@ class Folder():
             folder_name=None,
             description=None):
 
-        self.folder_id = folder_id
+        self.folder_id = str(folder_id)
         self.folder_name = folder_name
         self.description = description
-        self.Connection = connection
+        self.connection = connection
 
         self._endpoint_fragment = 'folders'
 
 
     def delete(self):
         '''Delete a folder'''
-        pass
+        url_fragments = [self._endpoint_fragment, self.folder_id]
+
+        # request folder deletion
+        server_response = self.connection.delete(
+                url_fragments=url_fragments)
+
+        response_code = server_response.status_code
+        return response_code == 202     # Accepted
+
 
     def move(self, parent_folder_id):
         '''Move a folder under a new parent'''
-        pass
+        url_fragments = [self._endpoint_fragment, self.folder_id]
+
+        headers = {'parent': str(parent_folder_id),
+                'action':'move'}
+
+        # request to move current folder
+        server_response = self.connection.put(
+                url_fragments=url_fragments, headers=headers)
+
+        response_code = server_response.status_code
+        return response_code == 202     # Accepted
 
     def copy(self, parent_folder_id):
         '''Copy a folder under another parent'''
-        pass
+        url_fragments = [self._endpoint_fragment, self.folder_id]
+
+        headers = {'parent': str(parent_folder_id),
+                'action':'copy'}
+
+        # request to copy current folder
+        server_response = self.connection.put(
+                url_fragments=url_fragments, headers=headers)
+
+        response_code = server_response.status_code
+        return response_code == 202     # Accepted
 
     def rename(self, new_name):
         '''Rename a folder'''
-        pass
+        url_fragments = [self._endpoint_fragment, self.folder_id]
+
+        headers = {'name': new_name}
+
+        # request to rename current folder
+        server_response = self.connection.patch(
+                url_fragments=url_fragments, headers=headers)
+
+        response_code = server_response.status_code
+        return response_code == 200
 
     def edit_description(self, new_description):
         '''Modify a folder's description'''
-        pass
+        url_fragments = [self._endpoint_fragment, self.folder_id]
+
+        headers = {'description': new_description}
+
+        # request to modify current folder description
+        server_response = self.connection.patch(
+                url_fragments=url_fragments, headers=headers)
+
+        response_code = server_response.status_code
+        return response_code == 200
