@@ -236,6 +236,16 @@ class Fossology():
                 connection=self.connection)
 
 
+    def get_all_folders(self):
+        '''Returns a list of all folders on the server'''
+        pass
+
+    def new_folder(self, parent_folder_id, folder_name,
+                    folder_description=None):
+        '''Create a new folder on the server'''
+        pass
+
+
 
 
 class Upload():
@@ -299,3 +309,40 @@ class Upload():
 
         response_code = server_response.status_code
         return response_code == 202     # Accepted
+
+
+
+class Folder():
+    '''Denotes a single folder on the server'''
+
+    def __init__(self,  folder_id, connection,
+            folder_name=None,
+            description=None):
+
+        self.folder_id = folder_id
+        self.folder_name = folder_name
+        self.description = description
+        self.Connection = connection
+
+        self._endpoint_fragment = 'folders'
+
+
+    def delete(self):
+        '''Delete a folder'''
+        pass
+
+    def move(self, parent_folder_id):
+        '''Move a folder under a new parent'''
+        pass
+
+    def copy(self, parent_folder_id):
+        '''Copy a folder under another parent'''
+        pass
+
+    def rename(self, new_name):
+        '''Rename a folder'''
+        pass
+
+    def edit_description(self, new_description):
+        '''Modify a folder's description'''
+        pass
