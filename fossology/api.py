@@ -116,7 +116,8 @@ class Fossology():
         self.connection.close_connection()
 
 
-    def generate_auth_token(self, username, password, expire, scope='read'):
+    def generate_auth_token(self, username, password, token_expire,
+                                token_name=None, token_scope='read'):
         '''Requests a new token from the fossology server
 
         Adds the token to the session if successful, else
@@ -131,9 +132,9 @@ class Fossology():
         # Prepare data to send with the request
         payload = json.dumps({"username": username,
              'password': password,
-             'token_name': utils._generate_unique_name(),
-             'token_scope': scope,
-             'token_expire': expire
+             'token_name': token_name or utils._generate_unique_name(),
+             'token_scope': token_scope,
+             'token_expire': token_expire
              })
 
         # request a token from the server
