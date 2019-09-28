@@ -13,6 +13,26 @@ class Connection():
         self.session = Session()
         self.headers = self.session.headers
 
+    def upload_file(self, url_fragments, file, *args, **kwargs):
+
+        url = utils._join_url(self.server, *url_fragments)
+
+        with open(file) as fi:
+            response = self.session.post(url,
+                            files={'fileInput':fi},
+                            *args, **kwargs)
+        response_code = response.status_code
+
+        # Raise an error if the request was not successful
+        if 400 <= response_code <=599 :
+            response_data = response.json()
+            raise FossologyError(response_code,
+                    response_data.get('message'),
+                    response_data.get('type'))
+
+        return response
+
+
     def _send_request(self, prepped_request):
         '''Sends a received prepared request
 
@@ -165,9 +185,29 @@ class Fossology():
         return uploads
 
 
-    def new_upload(self):
+    def new_upload(self, folder_id, fileInput,
+            upload_description=None, public='public'):
         '''Create a new upload on the server'''
-        pass
+        endpoint_fragments = ['uploads']
+
+        headers = {'folderId': str(folder_id),
+                    'uploadDescription':upload_description,
+                    'public':public}
+
+        server_response = self.connection.upload_file(
+                url_fragments=endpoint_fragments,
+                headers=headers,
+                file=fileInput)
+
+        response_code = server_response.status_code
+
+        if response_code == 201:
+            response_data = server_response.json()
+
+            # fossology returns an upload ID.
+            # Create an upload object with it
+            return self.upload(response_data.get('message'))
+
 
     def upload(self, upload_id):
         '''Gets a single upload from the server'''
