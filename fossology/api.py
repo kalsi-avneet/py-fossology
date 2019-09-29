@@ -310,6 +310,14 @@ class Fossology():
                     response_data['message'],
                     response_data['type'])
 
+    def get_all_users(self):
+        '''Get a list of all users on the server'''
+        pass
+
+    def user(self, user_id):
+        '''Gets a single user from the server'''
+        pass
+
 
 
 class Upload():
@@ -456,3 +464,14 @@ class Folder():
 
         response_code = server_response.status_code
         return response_code == 200
+
+class User():
+    '''Denotes a single user on the server'''
+
+    def __init__():
+        pass
+
+
+    def delete(self):
+        '''Delete a user'''
+        pass
