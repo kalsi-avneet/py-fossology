@@ -96,7 +96,7 @@ class Connection():
         self.session.close()
 
 class Fossology():
-    def __init__(self, server):
+    def __init__(self, server, auth):
 
         api_server = utils._join_url(server, 'api/v1')
 
@@ -107,6 +107,9 @@ class Fossology():
         self.connection.headers.update({
             'accept': 'application/json'
             })
+
+        # Request the server for an auth token
+        self.generate_auth_token(**auth)
 
         # (TODO): Setup logger if requested
 
