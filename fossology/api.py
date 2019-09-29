@@ -312,11 +312,59 @@ class Fossology():
 
     def get_all_users(self):
         '''Get a list of all users on the server'''
-        pass
+        users = []
+        endpoint_fragment = 'users'
+        headers = {'Content-Type': 'application/json'}
+
+        # Request a list of all users
+        server_response = self.connection.get(
+                url_fragments=[endpoint_fragment], headers=headers)
+        response_code = server_response.status_code
+
+
+        if response_code == 200:
+            response_data = server_response.json()
+
+            # Create new User objects from the data received
+            for user in response_data:
+                users.append(User(
+                    user_id = user['id'],
+                    name = user['name'],
+                    description = user['description'],
+                    email = user['email'],
+                    access_level = user['accessLevel'],
+                    root_folder_id = user['rootFolderId'],
+                    email_notification = user['emailNotification'],
+                    agents = user['agents'],
+                    connection = self.connection))
+
+        return users
 
     def user(self, user_id):
         '''Gets a single user from the server'''
-        pass
+        endpoint_fragments = ['users', user_id]
+
+        headers = {'Content-Type': 'application/json'}
+
+        # request user data
+        server_response = self.connection.get(
+                url_fragments=endpoint_fragments, headers=headers)
+        response_code = server_response.status_code
+
+        if response_code == 200:
+            response_data = server_response.json()
+
+            # Return a new 'User' object
+            return User(
+                    user_id = response_data['id'],
+                    name = response_data['name'],
+                    description = response_data['description'],
+                    email = response_data['email'],
+                    access_level = response_data['accessLevel'],
+                    root_folder_id = response_data['rootFolderId'],
+                    email_notification = response_data['emailNotification'],
+                    agents = response_data['agents'],
+                    connection = self.connection)
 
 
 
@@ -468,10 +516,29 @@ class Folder():
 class User():
     '''Denotes a single user on the server'''
 
-    def __init__():
-        pass
+    def __init__(self, user_id, name, description, email,
+            access_level, root_folder_id, email_notification,
+            agents, connection):
+        self.user_id=user_id
+        self.name=name
+        self.description=description
+        self.email=email
+        self.accessLevel=access_level
+        self.rootFolderId=root_folder_id
+        self.emailNotification=email_notification
+        self.agents=agents
+        self.connection=connection
+
+        self._endpoint_fragment = 'users'
 
 
     def delete(self):
         '''Delete a user'''
-        pass
+        url_fragments = [self._endpoint_fragment, self.user_id]
+
+        # request user deletion
+        server_response = self.connection.delete(
+                url_fragments=url_fragments)
+
+        response_code = server_response.status_code
+        return response_code == 202     # Accepted
