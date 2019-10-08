@@ -18,7 +18,7 @@ class Connection():
 
         url = utils._join_url(self.server, *url_fragments)
 
-        with open(file) as fi:
+        with open(file, 'rb') as fi:
             response = self.session.post(url,
                             files={'fileInput':fi},
                             *args, **kwargs)
