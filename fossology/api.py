@@ -190,12 +190,13 @@ class Fossology():
         return uploads
 
 
-    def new_upload(self, folder_id, fileInput,
+    def new_upload(self, target_folder, fileInput,
             upload_description=None, public='public'):
         '''Create a new upload on the server'''
         endpoint_fragments = ['uploads']
 
-        headers = {'folderId': str(folder_id),
+        target_folder_id = target_folder.folder_id
+        headers = {'folderId': target_folder_id,
                     'uploadDescription':upload_description,
                     'public':public}
 
@@ -288,31 +289,13 @@ class Fossology():
         return folders
 
 
-    def new_folder(self, parent_folder_id, folder_name,
+    def new_folder(self, parent_folder, folder_name,
                     folder_description=None):
         '''Create a new folder on the server'''
-        endpoint_fragments = ['folders']
 
-        headers = {
-                'parentFolder': str(parent_folder_id),
-                'folderName':folder_name,
-                'folderDescription':folder_description}
-
-        server_response = self.connection.post(
-                url_fragments=endpoint_fragments,
-                headers=headers)
-
-        response_code = server_response.status_code
-        response_data = server_response.json()
-
-        if response_code == 201:        # Folder created
-            # Create a folder object with received folder id
-            return Folder(folder_id=response_data.get('message'),
-                            connection=self.connection)
-        else:    # includes 200: (Folder with the same name already exists under the same parent)
-            raise FossologyError(response_code,
-                    response_data['message'],
-                    response_data['type'])
+        return parent_folder.create_child_folder(
+                            folder_name=folder_name,
+                            folder_description=folder_description)
 
     def get_all_users(self):
         '''Get a list of all users on the server'''
