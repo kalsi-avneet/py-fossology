@@ -5,7 +5,7 @@ from requests import Request, Session
 from fossology import utils
 from fossology.exceptions import FossologyError,\
         FossologyInvalidCredentialsError
-from fossology.resources import Upload, Folder, User
+from fossology.resources import Upload, Folder, User, Job
 
 class Connection():
     def __init__(self, server):
@@ -352,4 +352,59 @@ class Fossology():
                     email_notification = response_data['emailNotification'],
                     agents = response_data['agents'],
                     connection = self.connection)
+
+
+    def job(self, job_id):
+        '''Gets a single job from the server'''
+        endpoint_fragments = ['jobs', job_id]
+
+        headers = {'Content-Type': 'application/json'}
+
+        # request job data
+        server_response = self.connection.get(
+                url_fragments=endpoint_fragments, headers=headers)
+        response_code = server_response.status_code
+
+        if response_code == 200:
+            response_data = server_response.json()
+
+            # Return a new 'Job' object
+            return Job(
+                    job_id = response_data['id'],
+                    name = response_data['name'],
+                    queueDate = response_data['queueDate'],
+                    upload_id = response_data['uploadId'],
+                    user_id = response_data['userId'],
+                    group_id = response_data['groupId'],
+                    connection = self.connection)
+
+
+    def get_all_jobs(self, limit=None):
+        '''Gets a list of all jobs on the server'''
+        jobs = []
+        endpoint_fragment = 'jobs'
+        headers = {'Content-Type': 'application/json',
+                'limit': str(limit)}
+
+        # request a list of all jobs from the server
+        server_response = self.connection.get(
+                url_fragments=[endpoint_fragment], headers=headers)
+        response_code = server_response.status_code
+
+
+        if response_code == 200:
+            response_data = server_response.json()
+
+            # Create new Job objects from the data received
+            for job in response_data:
+                jobs.append(Job(
+                    job_id = job['id'],
+                    name = job['name'],
+                    queueDate = job['queueDate'],
+                    upload_id = job['uploadId'],
+                    user_id = job['userId'],
+                    group_id = job['groupId'],
+                    connection = self.connection))
+
+        return jobs
 

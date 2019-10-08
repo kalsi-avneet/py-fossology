@@ -202,3 +202,19 @@ class User():
 
         response_code = server_response.status_code
         return response_code == 202     # Accepted
+
+
+class Job():
+    '''Denotes a single job on the server'''
+
+    def __init__(self, job_id, name, queueDate, upload_id,
+            user_id, group_id, connection):
+        self.job_id=job_id
+        self.name=name
+        self.queueDate=queueDate
+        self.upload_id=upload_id   # TODO: make this Upload object
+        self.user_id=user_id       # TODO: make this a User object
+        self.group_id=group_id
+        self.connection=connection
+
+        self._endpoint_fragment = 'jobs'
