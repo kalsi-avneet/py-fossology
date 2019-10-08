@@ -12,8 +12,8 @@ class Upload():
             upload_date=None,
             filesize=None):
 
-        self.upload_id = upload_id
-        self.folder_id = folder_id
+        self.upload_id = str(upload_id)
+        self.folder_id = str(folder_id)
         self.folder_name = folder_name
         self.description = description
         self.upload_name = upload_name
