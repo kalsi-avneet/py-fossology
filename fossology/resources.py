@@ -1,3 +1,6 @@
+from fossology.exceptions import FossologyError,\
+        FossologyInvalidCredentialsError
+
 class Upload():
     '''Denotes a single upload'''
 
@@ -75,6 +78,33 @@ class Folder():
         self.connection = connection
 
         self._endpoint_fragment = 'folders'
+
+
+    def create_child_folder(self, folder_name,
+            folder_description=None):
+        '''Create a new folder inside the current folder'''
+        url_fragments = [self._endpoint_fragment]
+
+        headers = {
+                'parentFolder': self.folder_id,
+                'folderName':folder_name,
+                'folderDescription':folder_description}
+
+        server_response = self.connection.post(
+                url_fragments=url_fragments,
+                headers=headers)
+
+        response_code = server_response.status_code
+        response_data = server_response.json()
+
+        if response_code == 201:        # Folder created
+            # Create a folder object with received folder id
+            return Folder(folder_id=response_data.get('message'),
+                            connection=self.connection)
+        else:    # includes 200: (Folder with the same name already exists under the same parent)
+            raise FossologyError(response_code,
+                    response_data['message'],
+                    response_data['type'])
 
 
     def delete(self):
