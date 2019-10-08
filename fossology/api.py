@@ -1,100 +1,9 @@
 import json
-from requests import Request, Session
-
 
 from fossology import utils
-from fossology.exceptions import FossologyError,\
-        FossologyInvalidCredentialsError
+from fossology.exceptions import FossologyError
 from fossology.resources import Upload, Folder, User, Job
 
-class Connection():
-    def __init__(self, server):
-        self.server = server
-
-        self.session = Session()
-        self.headers = self.session.headers
-
-    def upload_file(self, url_fragments, file, *args, **kwargs):
-
-        url = utils._join_url(self.server, *url_fragments)
-
-        with open(file, 'rb') as fi:
-            response = self.session.post(url,
-                            files={'fileInput':fi},
-                            *args, **kwargs)
-        response_code = response.status_code
-
-        # Raise an error if the request was not successful
-        if 400 <= response_code <=599 :
-            response_data = response.json()
-            raise FossologyError(response_code,
-                    response_data.get('message'),
-                    response_data.get('type'))
-
-        return response
-
-
-    def _send_request(self, prepped_request):
-        '''Sends a received prepared request
-
-        Returns a response object if successful, or
-            throws a FossologyError
-        '''
-        response = self.session.send(prepped_request)
-        response_code = response.status_code
-
-        # Raise an error if the request was not successful
-        if 400 <= response_code <=599 :
-            response_data = response.json()
-            raise FossologyError(response_code,
-                    response_data.get('message'),
-                    response_data.get('type'))
-
-        return response
-
-
-    def delete(self, url_fragments, *args, **kwargs):
-        url = utils._join_url(self.server, *url_fragments)
-        prepared_request = self.session.prepare_request(
-                Request(method='DELETE', url=url, *args, **kwargs))
-        return(self._send_request(prepared_request))
-
-
-    def get(self, url_fragments, *args, **kwargs):
-        '''Wrapper around a sessions GET request
-        '''
-        url = utils._join_url(self.server, *url_fragments)
-
-        prepared_request = self.session.prepare_request(
-                Request(method='GET', url=url, *args, **kwargs))
-        return(self._send_request(prepared_request))
-
-
-    def patch(self, url_fragments, *args, **kwargs):
-        url = utils._join_url(self.server, *url_fragments)
-        prepared_request = self.session.prepare_request(
-                Request(method='PATCH', url=url, *args, **kwargs))
-        return(self._send_request(prepared_request))
-
-
-    def post(self, url_fragments, *args, **kwargs):
-        '''Wrapper around a sessions POST request
-        '''
-        url = utils._join_url(self.server, *url_fragments)
-        prepared_request = self.session.prepare_request(
-                Request(method='POST', url=url, *args, **kwargs))
-        return(self._send_request(prepared_request))
-
-
-    def put(self, url_fragments, *args, **kwargs):
-        url = utils._join_url(self.server, *url_fragments)
-        prepared_request = self.session.prepare_request(
-                Request(method='PUT', url=url, *args, **kwargs))
-        return(self._send_request(prepared_request))
-
-
-    def close_connection(self):
-        self.session.close()
 
 class Fossology():
     def __init__(self, server, auth):
@@ -102,7 +11,7 @@ class Fossology():
         api_server = utils._join_url(server, 'api/v1')
 
         # setup connection
-        self.connection = Connection(server=api_server)
+        self.connection = utils.Connection(server=api_server)
 
         # Add common headers to the connection
         self.connection.headers.update({
