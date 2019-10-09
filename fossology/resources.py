@@ -63,6 +63,31 @@ class Upload():
         response_code = server_response.status_code
         return response_code == 202     # Accepted
 
+    def request_report_generation(self, reportFormat):
+        '''Request a report to be generated on this upload'''
+        url_fragments = ['report']
+
+        headers = {'uploadId': str(self.upload_id),
+                    'reportFormat':reportFormat}
+
+        # request report generation
+        server_response = self.connection.get(
+                url_fragments=url_fragments, headers=headers)
+
+        response_code = server_response.status_code
+        if response_code == 201:
+            response_data = server_response.json()
+            report_id = response_data['message'].split('/')[-1]
+
+            return Report(report_id=report_id,
+                    reportFormat=reportFormat,
+                    connection=self.connection)
+
+        else:
+            raise FossologyError(response_code,
+                    response_data['message'],
+                    response_data['type'])
+
 
 
 class Folder():
@@ -218,3 +243,19 @@ class Job():
         self.connection=connection
 
         self._endpoint_fragment = 'jobs'
+
+class Report():
+    '''Denotes a single report on the server'''
+
+    def __init__(self, report_id, reportFormat,
+            connection):
+        self.report_id=report_id
+        self.reportFormat=reportFormat
+        self.connection=connection
+
+        self._endpoint_fragment = 'report'
+
+
+    def download(self):
+        '''Downloads a report'''
+        pass
