@@ -1,6 +1,32 @@
 from fossology.exceptions import FossologyError,\
         FossologyInvalidCredentialsError
 
+
+
+def job(job_id, connection):
+    '''Gets a single job from the server'''
+    endpoint_fragments = ['jobs', job_id]
+
+    headers = {'Content-Type': 'application/json'}
+
+    # request job data
+    server_response = connection.get(
+            url_fragments=endpoint_fragments, headers=headers)
+    response_code = server_response.status_code
+
+    if response_code == 200:
+        response_data = server_response.json()
+
+        # Return a new 'Job' object
+        return Job(
+                job_id = response_data['id'],
+                name = response_data['name'],
+                queueDate = response_data['queueDate'],
+                upload_id = response_data['uploadId'],
+                user_id = response_data['userId'],
+                group_id = response_data['groupId'],
+                connection = connection)
+
 class Upload():
     '''Denotes a single upload'''
 
@@ -63,8 +89,34 @@ class Upload():
         response_code = server_response.status_code
         return response_code == 202     # Accepted
 
+    def schedule_agents(self, agents):
+        '''Schedule agents on this upload'''
+        url_fragments = ['jobs']
+
+        headers = {'Content-Type': 'application/json',
+                    'folderId':self.folder_id,
+                    'uploadId':self.upload_id}
+
+        # request the server to schedule an analysis
+        server_response = self.connection.post(
+                url_fragments=url_fragments, headers=headers,
+                data=agents)
+
+        response_code = server_response.status_code
+
+        if response_code == 201:
+            response_data = server_response.json()
+            # Extract job id and return a job object
+            job_id = response_data['message']
+            return job(job_id=job_id, connection=self.connection)
+        else:
+            raise FossologyError(response_code,
+                    response_data['message'],
+                    response_data['type'])
+
+
     def request_report_generation(self, reportFormat):
-        '''Request a report to be generated on this upload'''
+        '''Request a report to be generated for this upload'''
         url_fragments = ['report']
 
         headers = {'uploadId': str(self.upload_id),

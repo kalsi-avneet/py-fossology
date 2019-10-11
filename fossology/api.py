@@ -2,7 +2,7 @@ import json
 
 from fossology import utils
 from fossology.exceptions import FossologyError
-from fossology.resources import Upload, Folder, User, Job
+from fossology.resources import Upload, Folder, User, Job, job
 
 
 class Fossology():
@@ -265,27 +265,8 @@ class Fossology():
 
     def job(self, job_id):
         '''Gets a single job from the server'''
-        endpoint_fragments = ['jobs', job_id]
-
-        headers = {'Content-Type': 'application/json'}
-
-        # request job data
-        server_response = self.connection.get(
-                url_fragments=endpoint_fragments, headers=headers)
-        response_code = server_response.status_code
-
-        if response_code == 200:
-            response_data = server_response.json()
-
-            # Return a new 'Job' object
-            return Job(
-                    job_id = response_data['id'],
-                    name = response_data['name'],
-                    queueDate = response_data['queueDate'],
-                    upload_id = response_data['uploadId'],
-                    user_id = response_data['userId'],
-                    group_id = response_data['groupId'],
-                    connection = self.connection)
+        return job(job_id=job_id,
+                connection=self.connection)
 
 
     def get_all_jobs(self, limit=None):
@@ -318,28 +299,8 @@ class Fossology():
         return jobs
 
 
-    def schedule_analysis(self, folder, upload, agents):
-        '''Schedule an analysis of an existing upload'''
-        endpoint_fragment = ['jobs']
+    def schedule_agents(self, upload, agents):
+        '''Schedule agents on an existing upload'''
 
-        headers = {'Content-Type': 'application/json',
-                    'folderId':folder.folder_id,
-                    'uploadId':upload.upload_id}
-
-        # request the server to schedule an analysis
-        server_response = self.connection.post(
-                url_fragments=endpoint_fragment, headers=headers,
-                data=agents)
-
-        response_code = server_response.status_code
-
-        if response_code == 201:
-            response_data = server_response.json()
-            # Extract job id and return a job object
-            job_id = response_data['message']
-            return self.job(job_id=job_id)
-        else:
-            raise FossologyError(response_code,
-                    response_data['message'],
-                    response_data['type'])
+        return upload.schedule_agents(agents=agents)
 
