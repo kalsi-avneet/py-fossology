@@ -63,11 +63,11 @@ class Upload():
 
 
 
-    def move(self, destination_folder_id):
+    def move(self, destination_folder):
         '''Move an upload to another folder'''
         url_fragments = [self._endpoint_fragment, self.upload_id]
 
-        headers = {'folderId': str(destination_folder_id)}
+        headers = {'folderId': destination_folder.folder_id}
 
         # request to move current upload
         server_response = self.connection.patch(
@@ -76,11 +76,11 @@ class Upload():
         response_code = server_response.status_code
         return response_code == 202     # Accepted
 
-    def copy(self, destination_folder_id) -> bool:
+    def copy(self, destination_folder):
         '''Move an upload to another folder'''
         url_fragments = [self._endpoint_fragment, self.upload_id]
 
-        headers = {'folderId': str(destination_folder_id)}
+        headers = {'folderId': destination_folder.folder_id}
 
         # request to move current upload
         server_response = self.connection.put(
@@ -196,11 +196,11 @@ class Folder():
         return response_code == 202     # Accepted
 
 
-    def move(self, parent_folder_id):
+    def move(self, parent_folder):
         '''Move a folder under a new parent'''
         url_fragments = [self._endpoint_fragment, self.folder_id]
 
-        headers = {'parent': str(parent_folder_id),
+        headers = {'parent': parent_folder.folder_id,
                 'action':'move'}
 
         # request to move current folder
@@ -210,11 +210,11 @@ class Folder():
         response_code = server_response.status_code
         return response_code == 202     # Accepted
 
-    def copy(self, parent_folder_id):
+    def copy(self, parent_folder):
         '''Copy a folder under another parent'''
         url_fragments = [self._endpoint_fragment, self.folder_id]
 
-        headers = {'parent': str(parent_folder_id),
+        headers = {'parent': parent_folder.folder_id,
                 'action':'copy'}
 
         # request to copy current folder
