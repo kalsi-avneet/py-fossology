@@ -1,6 +1,7 @@
 from posixpath import join
 from requests import Request, Session
 from uuid import uuid4
+import cgi
 
 
 from fossology.exceptions import FossologyError, FossologyResourceNotReadyError
@@ -48,8 +49,9 @@ class Connection():
 
         return response
 
-    def download_file(self, url_fragments, filename='download',
+    def download_file(self, url_fragments, filename=None,
             *args, **kwargs):
+        '''Downloads a file'''
         url = _join_url(self.server, *url_fragments)
         response = self.session.get(url, stream=True,
                 *args, **kwargs)
@@ -57,11 +59,17 @@ class Connection():
         chunks = response.iter_content()
         response_code = response.status_code
         if response_code == 200:
+            # Try to extract the filename
+            _,params = cgi.parse_header(
+                    response.headers.get('Content-Disposition'))
+            filename = filename or params.get('filename','download')
+
+            # Write the downloaded data to the file
             with open(filename, 'wb') as f:
                 for chunk in chunks:
                     f.write(chunk)
-
             return filename
+
         elif response_code == 503:
             response_data = response.json()
             raise FossologyResourceNotReadyError(response_code,
