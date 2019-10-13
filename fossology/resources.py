@@ -310,4 +310,6 @@ class Report():
 
     def download(self):
         '''Downloads a report'''
-        pass
+        url_fragments = [self._endpoint_fragment, self.report_id]
+
+        self.connection.download_file(url_fragments)

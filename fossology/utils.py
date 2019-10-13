@@ -3,7 +3,7 @@ from requests import Request, Session
 from uuid import uuid4
 
 
-from fossology.exceptions import FossologyError
+from fossology.exceptions import FossologyError, FossologyResourceNotReadyError
 
 
 def _join_url(base_url, *fragments):
@@ -47,6 +47,29 @@ class Connection():
                     response_data.get('type'))
 
         return response
+
+    def download_file(self, url_fragments, filename='download',
+            *args, **kwargs):
+        url = _join_url(self.server, *url_fragments)
+        response = self.session.get(url, stream=True,
+                *args, **kwargs)
+
+        chunks = response.iter_content()
+        response_code = response.status_code
+        if response_code == 200:
+            with open(filename, 'wb') as f:
+                for chunk in chunks:
+                    f.write(chunk)
+
+            return filename
+        elif response_code == 503:
+            response_data = response.json()
+            raise FossologyResourceNotReadyError(response_code,
+                    response_data['message'],
+                    response_data['type'],
+                    response.headers.get('Retry-After'))
+        else:
+            raise FossologyError(response_code, None, None)
 
 
     def _send_request(self, prepped_request):
