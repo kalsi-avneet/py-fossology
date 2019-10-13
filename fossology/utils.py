@@ -51,7 +51,12 @@ class Connection():
 
     def download_file(self, url_fragments, filename=None,
             *args, **kwargs):
-        '''Downloads a file'''
+        '''Downloads a file
+
+        Returns a filename if successful, else throws an error
+          - FossologyResourceNotReadyError if resource is not ready
+          - FossologyError for any other error
+        '''
         url = _join_url(self.server, *url_fragments)
         response = self.session.get(url, stream=True,
                 *args, **kwargs)
