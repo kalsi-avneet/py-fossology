@@ -27,6 +27,28 @@ def job(job_id, connection):
                 group_id = response_data['groupId'],
                 connection = connection)
 
+def folder(folder_id, connection):
+    '''Gets a single folder from the server'''
+    endpoint_fragments = ['folders', folder_id]
+
+    headers = {'Content-Type': 'application/json'}
+
+    # request folder data
+    server_response =connection.get(
+            url_fragments=endpoint_fragments, headers=headers)
+    response_code = server_response.status_code
+
+    if response_code == 200:
+        response_data = server_response.json()
+
+        # Return a new 'Folder' object
+        return Folder(
+                folder_id = response_data['id'],
+                folder_name = response_data['name'],
+                description = response_data['description'],
+                connection =connection)
+
+
 class Upload():
     '''Denotes a single upload'''
 
@@ -73,8 +95,11 @@ class Upload():
         server_response = self.connection.patch(
                 url_fragments=url_fragments, headers=headers)
 
-        response_code = server_response.status_code
-        return response_code == 202     # Accepted
+        # update local object if successfully updated on server
+        if server_response.status_code == 202:
+            self.folder_id = destination_folder.folder_id
+            self.folder_name = destination_folder.folder_name
+            return True
 
     def copy(self, destination_folder):
         '''Move an upload to another folder'''
@@ -176,7 +201,7 @@ class Folder():
 
         if response_code == 201:        # Folder created
             # Create a folder object with received folder id
-            return Folder(folder_id=response_data.get('message'),
+            return folder(folder_id=response_data.get('message'),
                             connection=self.connection)
         else:    # includes 200: (Folder with the same name already exists under the same parent)
             raise FossologyError(response_code,
@@ -234,8 +259,10 @@ class Folder():
         server_response = self.connection.patch(
                 url_fragments=url_fragments, headers=headers)
 
-        response_code = server_response.status_code
-        return response_code == 200
+        # update local object if successfully updated on server
+        if server_response.status_code == 200:
+            self.folder_name = new_name
+            return True
 
     def edit_description(self, new_description):
         '''Modify a folder's description'''
@@ -247,8 +274,10 @@ class Folder():
         server_response = self.connection.patch(
                 url_fragments=url_fragments, headers=headers)
 
-        response_code = server_response.status_code
-        return response_code == 200
+        # update local object if successfully updated on server
+        if server_response.status_code == 200:
+            self.description = new_description
+            return True
 
 class User():
     '''Denotes a single user on the server'''

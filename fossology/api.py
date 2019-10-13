@@ -2,7 +2,7 @@ import json
 
 from fossology import utils
 from fossology.exceptions import FossologyError
-from fossology.resources import Upload, Folder, User, Job, job
+from fossology.resources import Upload, Folder, User, Job, folder, job
 
 
 class Fossology():
@@ -152,24 +152,8 @@ class Fossology():
 
     def folder(self, folder_id):
         '''Gets a single folder from the server'''
-        endpoint_fragments = ['folders', folder_id]
-
-        headers = {'Content-Type': 'application/json'}
-
-        # request folder data
-        server_response = self.connection.get(
-                url_fragments=endpoint_fragments, headers=headers)
-        response_code = server_response.status_code
-
-        if response_code == 200:
-            response_data = server_response.json()
-
-            # Return a new 'Folder' object
-            return Folder(
-                    folder_id = response_data['id'],
-                    folder_name = response_data['name'],
-                    description = response_data['description'],
-                    connection = self.connection)
+        return folder(folder_id=folder_id,
+                connection=self.connection)
 
 
     def get_all_folders(self):
