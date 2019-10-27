@@ -105,6 +105,7 @@ class Fossology():
         endpoint_fragments = ['uploads']
 
         target_folder_id = target_folder.folder_id
+        target_folder_name = target_folder.folder_name
         headers = {'folderId': target_folder_id,
                     'uploadDescription':upload_description,
                     'public':public}
@@ -121,7 +122,13 @@ class Fossology():
 
             # fossology returns an upload ID.
             # Create an upload object with it
-            return self.upload(response_data.get('message'))
+            return Upload(
+                upload_id = response_data['message'],
+                folder_id = target_folder_id,
+                folder_name = target_folder_name,
+                description = upload_description,
+                connection=self.connection)
+            # return self.upload(response_data.get('message'))
 
 
     def upload(self, upload_id):
