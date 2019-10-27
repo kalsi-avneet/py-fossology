@@ -337,8 +337,8 @@ class Report():
         self._endpoint_fragment = 'report'
 
 
-    def download(self):
+    def download(self, filename=None):
         '''Downloads a generated report'''
         url_fragments = [self._endpoint_fragment, self.report_id]
 
-        return self.connection.download_file(url_fragments)
+        return self.connection.download_file(url_fragments, filename)

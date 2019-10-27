@@ -128,7 +128,6 @@ class Fossology():
                 folder_name = target_folder_name,
                 description = upload_description,
                 connection=self.connection)
-            # return self.upload(response_data.get('message'))
 
 
     def upload(self, upload_id):
