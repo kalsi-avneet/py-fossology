@@ -1,4 +1,5 @@
 import json
+from collections import namedtuple
 
 from fossology import utils
 from fossology.exceptions import FossologyError
@@ -293,4 +294,68 @@ class Fossology():
         '''Schedule agents on an existing upload'''
 
         return upload.schedule_agents(agents=agents)
+
+
+    def search(self, search_type=None, filename=None, tag=None,
+                filesizemin=None, filesizemax=None, license=None,
+                copyright=None):
+        '''Search FOSSology for a specific file'''
+        search_results = []
+        search_result = namedtuple('search_result',
+                                    'upload uploadTreeId filename')
+        endpoint_fragment = 'search'
+
+
+        headers = {
+                'searchType': search_type,
+                'filename': filename,
+                'tag': tag,
+                'filesizemin': filesizemin,
+                'filesizemax': filesizemax,
+                'license': license,
+                'copyright': copyright
+                }
+
+
+        # Send a search request to the server
+        server_response = self.connection.get(url_fragments=[endpoint_fragment],
+                    headers=headers)
+        response_code = server_response.status_code
+
+
+        if response_code == 200:
+            response_data = server_response.json()
+
+            # append each search result to 'search_results'
+            for result in response_data:
+                # result contains of the following:
+                _filename = result['filename']
+                _upload_tree_id = result['uploadTreeId']
+                _upload=result['upload']
+
+                # Create an Upload object
+                upload=Upload(
+                    upload_id = _upload['id'],
+                    folder_id = _upload['folderid'],
+                    folder_name = _upload['foldername'],
+                    description = _upload['description'],
+                    upload_name = _upload['uploadname'],
+                    upload_date = _upload['uploaddate'],
+                    filesize = _upload['filesize'],
+
+                    connection=self.connection)
+
+                # append to the list
+                search_results.append(
+                        search_result(filename=result['filename'],
+                                uploadTreeId=result['uploadTreeId'],
+                                upload=upload))
+
+        else:
+            error_response = server_response.json()
+            raise FossologyError(response_code,
+                    error_response['message'],
+                    error_response['type'])
+
+        return search_results
 
