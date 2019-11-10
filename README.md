@@ -61,5 +61,9 @@ TBD
   
   
 # Installation
-TBD
+Use the following command to install
+
+```
+pip install py-fossology
+```
   
