@@ -3,7 +3,7 @@ from collections import namedtuple
 
 from fossology import utils
 from fossology.exceptions import FossologyError
-from fossology.resources import Upload, Folder, User, Job, folder, job
+from fossology.resources import Upload, Folder, User, Job, folder, job, SearchResult
 
 
 class Fossology():
@@ -301,10 +301,7 @@ class Fossology():
                 copyright=None):
         '''Search FOSSology for a specific file'''
         search_results = []
-        search_result = namedtuple('search_result',
-                                    'upload uploadTreeId filename')
         endpoint_fragment = 'search'
-
 
         headers = {
                 'searchType': search_type,
@@ -316,19 +313,17 @@ class Fossology():
                 'copyright': copyright
                 }
 
-
         # Send a search request to the server
         server_response = self.connection.get(url_fragments=[endpoint_fragment],
                     headers=headers)
         response_code = server_response.status_code
-
 
         if response_code == 200:
             response_data = server_response.json()
 
             # append each search result to 'search_results'
             for result in response_data:
-                # result contains of the following:
+                # result contains the following:
                 _filename = result['filename']
                 _upload_tree_id = result['uploadTreeId']
                 _upload=result['upload']
@@ -345,11 +340,10 @@ class Fossology():
 
                     connection=self.connection)
 
-                # append to the list
-                search_results.append(
-                        search_result(filename=result['filename'],
-                                uploadTreeId=result['uploadTreeId'],
-                                upload=upload))
+                # Create and append SearchResult objects to list
+                search_results.append(SearchResult(upload=upload,
+                                upload_tree_id=_upload_tree_id,
+                                filename=_filename))
 
         else:
             error_response = server_response.json()

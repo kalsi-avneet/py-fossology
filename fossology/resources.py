@@ -342,3 +342,12 @@ class Report():
         url_fragments = [self._endpoint_fragment, self.report_id]
 
         return self.connection.download_file(url_fragments, filename)
+
+
+class SearchResult():
+    '''Denotes a single search result'''
+
+    def __init__(self, upload, upload_tree_id, filename):
+        self.upload=upload
+        self.upload_tree_id=upload_tree_id
+        self.filename=filename
